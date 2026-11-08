@@ -3,6 +3,9 @@
 const { spawnSync } = require('child_process');
 const path = require('path');
 
+const { NotarizationStatus, submitAndWait } = require('./mac-notarization.cjs');
+exports.NotarizationStatus = NotarizationStatus;
+
 function run(command, args, operation) {
   const result = spawnSync(command, args, {
     env: process.env,
@@ -55,24 +58,9 @@ exports.default = async function notarizeDmg(context) {
     );
 
     console.log(`[MacDmgNotarize] Submitting ${dmgName} for notarization.`);
-    run(
-      'xcrun',
-      [
-        'notarytool',
-        'submit',
-        dmgPath,
-        '--apple-id',
-        appleId,
-        '--team-id',
-        teamId,
-        '--password',
-        appleIdPassword,
-        '--wait',
-        '--timeout',
-        '30m',
-      ],
-      `Notarization for ${dmgName}`,
-    );
+    await submitAndWait(dmgPath, [
+      '--apple-id', appleId, '--team-id', teamId, '--password', appleIdPassword,
+    ], appleIdPassword);
 
     run(
       'xcrun',
